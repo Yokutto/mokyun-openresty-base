@@ -185,7 +185,7 @@ RUN \
       https://raw.githubusercontent.com/nbs-system/naxsi/master/naxsi_config/naxsi_core.rules -o naxsi_core.rules \
     && mv naxsi_core.rules /usr/local/openresty/nginx/conf/naxsi_core.rules \
     && curl -fSLk \
-      https://web.archive.org/web/20191227182209if_/https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz -o GeoLite2-City.tar.gz \
+      https://trash-can.mokyun.net/GeoLite2-City_20191224.tar.gz -o GeoLite2-City.tar.gz \
     && tar xzf GeoLite2-City.tar.gz \
     && mv GeoLite2-City*/GeoLite2-City.mmdb /usr/local/openresty/nginx/conf/GeoLite2-City.mmdb
 
