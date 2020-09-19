@@ -10,12 +10,14 @@ RUN adduser -D www-data
 ENV PATH="/usr/local/openresty/bin:${PATH}"
 
 # Docker Build Arguments
-ARG RESTY_VERSION="1.15.8.3"
+ARG RESTY_VERSION="1.17.8.2"
 ARG RESTY_OPENSSL_VERSION="1.1.1g"
+ARG RESTY_OPENSSL_PATCH_VERSION="1.1.1f"
+ARG RESTY_OPENSSL_URL_BASE="https://www.openssl.org/source"
 ARG RESTY_PCRE_VERSION="8.44"
 ARG RESTY_J="1"
-ARG NAXSI_VERSION="0.56"
-ARG LUAROCKS_VERSION="3.2.1"
+ARG NAXSI_VERSION="1.1"
+ARG LUAROCKS_VERSION="3.3.1"
 ARG RESTY_CONFIG_OPTIONS="\
     --with-file-aio \
     --with-http_addition_module \
@@ -70,54 +72,54 @@ ARG _RESTY_CONFIG_DEPS="--with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} --w
 
 RUN \
     apk add --no-cache --virtual .build-deps \
-        gd \
-        build-base \
-        gd-dev \
-        geoip-dev \
-        libxslt-dev \
-        linux-headers \
-        outils-md5 \
-        perl-dev \
-        readline-dev \
-        zlib-dev \
-        git \
-        unzip \
-        make \
-        lua5.1-dev \
+    gd \
+    build-base \
+    gd-dev \
+    geoip-dev \
+    libxslt-dev \
+    linux-headers \
+    outils-md5 \
+    perl-dev \
+    readline-dev \
+    zlib-dev \
+    git \
+    unzip \
+    make \
+    lua5.1-dev \
     && apk add --no-cache \
-        curl \
-        geoip \
-        libgcc \
-        libxslt \
-        zlib \
-        libstdc++ \
-        bash \
-        pcre-dev \
-      	gcc \
-      	libc-dev \
-        openssl \
-        imagemagick \
-        imagemagick-dev \
-        libmaxminddb-dev \
+    curl \
+    geoip \
+    libgcc \
+    libxslt \
+    zlib \
+    libstdc++ \
+    bash \
+    pcre-dev \
+    gcc \
+    libc-dev \
+    openssl \
+    imagemagick \
+    imagemagick-dev \
+    libmaxminddb-dev \
     && cd /tmp \
-    && curl -fSLk https://www.openssl.org/source/openssl-${RESTY_OPENSSL_VERSION}.tar.gz -o openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
+    && curl -fSL "${RESTY_OPENSSL_URL_BASE}/openssl-${RESTY_OPENSSL_VERSION}.tar.gz" -o openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
     && tar xzf openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
     && cd openssl-${RESTY_OPENSSL_VERSION} \
     && if [ $(echo ${RESTY_OPENSSL_VERSION} | cut -c 1-5) = "1.1.1" ] ; then \
-        echo 'patching OpenSSL 1.1.1 for OpenResty' \
-        && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/openssl-1.1.1g-sess_set_get_cb_yield.patch | patch -p1 ; \
+    echo 'patching OpenSSL 1.1.1 for OpenResty' \
+    && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/openssl-${RESTY_OPENSSL_PATCH_VERSION}-sess_set_get_cb_yield.patch | patch -p1 ; \
     fi \
     && if [ $(echo ${RESTY_OPENSSL_VERSION} | cut -c 1-5) = "1.1.0" ] ; then \
-        echo 'patching OpenSSL 1.1.0 for OpenResty' \
-        && curl -s https://raw.githubusercontent.com/openresty/openresty/ed328977028c3ec3033bc25873ee360056e247cd/patches/openssl-1.1.0j-parallel_build_fix.patch | patch -p1 \
-        && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/openssl-1.1.0d-sess_set_get_cb_yield.patch | patch -p1 ; \
+    echo 'patching OpenSSL 1.1.0 for OpenResty' \
+    && curl -s https://raw.githubusercontent.com/openresty/openresty/ed328977028c3ec3033bc25873ee360056e247cd/patches/openssl-1.1.0j-parallel_build_fix.patch | patch -p1 \
+    && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/openssl-${RESTY_OPENSSL_PATCH_VERSION}-sess_set_get_cb_yield.patch | patch -p1 ; \
     fi \
     && ./config \
-      no-threads shared zlib -g \
-      enable-ssl3 enable-ssl3-method \
-      --prefix=/usr/local/openresty/openssl \
-      --libdir=lib \
-      -Wl,-rpath,/usr/local/openresty/openssl/lib \
+    no-threads shared zlib -g \
+    enable-ssl3 enable-ssl3-method \
+    --prefix=/usr/local/openresty/openssl \
+    --libdir=lib \
+    -Wl,-rpath,/usr/local/openresty/openssl/lib \
     && make -j${RESTY_J} \
     && make -j${RESTY_J} install_sw \
     && cd /tmp \
@@ -125,11 +127,11 @@ RUN \
     && tar xzf pcre-${RESTY_PCRE_VERSION}.tar.gz \
     && cd pcre-${RESTY_PCRE_VERSION} \
     && ./configure \
-        --prefix=/usr/local/openresty/pcre \
-        --disable-cpp \
-        --enable-jit \
-        --enable-utf \
-        --enable-unicode-properties \
+    --prefix=/usr/local/openresty/pcre \
+    --disable-cpp \
+    --enable-jit \
+    --enable-utf \
+    --enable-unicode-properties \
     && make -j${RESTY_J} \
     && make -j${RESTY_J} install \
     && cd /tmp \
@@ -171,21 +173,21 @@ RUN \
 RUN \
     cd /tmp \
     && rm -rf \
-        openssl-${RESTY_OPENSSL_VERSION} \
-        openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
-        openresty-${RESTY_VERSION}.tar.gz openresty-${RESTY_VERSION} \
-        pcre-${RESTY_PCRE_VERSION}.tar.gz pcre-${RESTY_PCRE_VERSION} \
-        luarocks-${LUAROCKS_VERSION}.tar.gz luarocks-${LUAROCKS_VERSION} \
-        tengine \
+    openssl-${RESTY_OPENSSL_VERSION} \
+    openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
+    openresty-${RESTY_VERSION}.tar.gz openresty-${RESTY_VERSION} \
+    pcre-${RESTY_PCRE_VERSION}.tar.gz pcre-${RESTY_PCRE_VERSION} \
+    luarocks-${LUAROCKS_VERSION}.tar.gz luarocks-${LUAROCKS_VERSION} \
+    tengine \
     && apk del .build-deps
 
 # Download Naxsi rules and GeoIP databases
 RUN \
     curl -fSLk \
-      https://raw.githubusercontent.com/nbs-system/naxsi/master/naxsi_config/naxsi_core.rules -o naxsi_core.rules \
+    https://raw.githubusercontent.com/nbs-system/naxsi/master/naxsi_config/naxsi_core.rules -o naxsi_core.rules \
     && mv naxsi_core.rules /usr/local/openresty/nginx/conf/naxsi_core.rules \
     && curl -fSLk \
-      https://trash-can.mokyun.net/GeoLite2-City_20191224.tar.gz -o GeoLite2-City.tar.gz \
+    https://trash-can.mokyun.net/GeoLite2-City_20191224.tar.gz -o GeoLite2-City.tar.gz \
     && tar xzf GeoLite2-City.tar.gz \
     && mv GeoLite2-City*/GeoLite2-City.mmdb /usr/local/openresty/nginx/conf/GeoLite2-City.mmdb
 
