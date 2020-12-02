@@ -1,4 +1,4 @@
-# Openresty 1.15 with Naxsi WAF
+# Openresty 1.19.3.1 with Naxsi WAF
 
 A Docker base image for Openresty with Naxsi WAF, this also includes some useful modules for CDN environment. Enjoy !
 
@@ -7,11 +7,11 @@ A Docker base image for Openresty with Naxsi WAF, this also includes some useful
 *All modules link's below point to their docs, usage or configuration example*
 
 ### Versions and stuff
-* **Openresty version:** 1.15.8.3
-* **Naxsi WAF version:** 0.56
+* **Openresty version:** 1.19.3.1
+* **Naxsi WAF version:** 1.3
 * **OpenSSL version:** 1.1.1g
 * **PCRE version:** 8.44
-* **LuaRocks version:** 3.2.1
+* **LuaRocks version:** 3.4.0
 
 ### Openresty modules
 * [Naxsi WAF](https://github.com/nbs-system/naxsi/wiki)

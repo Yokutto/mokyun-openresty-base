@@ -10,15 +10,16 @@ RUN adduser -D www-data
 ENV PATH="/usr/local/openresty/bin:${PATH}"
 
 # Docker Build Arguments
-ARG RESTY_VERSION="1.17.8.2"
+ARG RESTY_VERSION="1.19.3.1"
 ARG RESTY_OPENSSL_VERSION="1.1.1g"
 ARG RESTY_OPENSSL_PATCH_VERSION="1.1.1f"
 ARG RESTY_OPENSSL_URL_BASE="https://www.openssl.org/source"
 ARG RESTY_PCRE_VERSION="8.44"
 ARG RESTY_J="1"
-ARG NAXSI_VERSION="1.1"
-ARG LUAROCKS_VERSION="3.3.1"
+ARG NAXSI_VERSION="1.3"
+ARG LUAROCKS_VERSION="3.4.0"
 ARG RESTY_CONFIG_OPTIONS="\
+    --with-compat \
     --with-file-aio \
     --with-http_addition_module \
     --with-http_auth_request_module \
@@ -48,6 +49,8 @@ ARG RESTY_CONFIG_OPTIONS="\
     --with-stream \
     --with-stream_ssl_module \
     --with-threads \
+    --with-cc-opt='-DNGX_LUA_ABORT_AT_PANIC -I/usr/local/openresty/pcre/include -I/usr/local/openresty/openssl/include' \
+    --with-ld-opt='-L/usr/local/openresty/pcre/lib -L/usr/local/openresty/openssl/lib -Wl,-rpath,/usr/local/openresty/pcre/lib:/usr/local/openresty/openssl/lib' \
     "
 ARG TENGINE_MODULES="\
     --add-module=/tmp/tengine/modules/ngx_http_concat_module/ \
@@ -72,35 +75,35 @@ ARG _RESTY_CONFIG_DEPS="--with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} --w
 
 RUN \
     apk add --no-cache --virtual .build-deps \
-    gd \
-    build-base \
-    gd-dev \
-    geoip-dev \
-    libxslt-dev \
-    linux-headers \
-    outils-md5 \
-    perl-dev \
-    readline-dev \
-    zlib-dev \
-    git \
-    unzip \
-    make \
-    lua5.1-dev \
+        gd \
+        build-base \
+        gd-dev \
+        geoip-dev \
+        libxslt-dev \
+        linux-headers \
+        outils-md5 \
+        perl-dev \
+        readline-dev \
+        zlib-dev \
+        git \
+        unzip \
+        make \
+        lua5.1-dev \
     && apk add --no-cache \
-    curl \
-    geoip \
-    libgcc \
-    libxslt \
-    zlib \
-    libstdc++ \
-    bash \
-    pcre-dev \
-    gcc \
-    libc-dev \
-    openssl \
-    imagemagick \
-    imagemagick-dev \
-    libmaxminddb-dev \
+        curl \
+        geoip \
+        libgcc \
+        libxslt \
+        zlib \
+        libstdc++ \
+        bash \
+        pcre-dev \
+        gcc \
+        libc-dev \
+        openssl \
+        imagemagick \
+        imagemagick-dev \
+        libmaxminddb-dev \
     && cd /tmp \
     && curl -fSL "${RESTY_OPENSSL_URL_BASE}/openssl-${RESTY_OPENSSL_VERSION}.tar.gz" -o openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
     && tar xzf openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
@@ -161,13 +164,14 @@ RUN luarocks install lua-resty-auto-ssl
 # Openresty Modules
 RUN \
     opm get \
-    xiedacon/lua-utility \
-    c64bob/lua-resty-aes \
-    detailyang/lua-resty-cors \
-    ledgetech/lua-resty-http \
-    openresty/lua-resty-limit-traffic \
-    anjia0532/lua-resty-maxminddb \
-    openresty/lua-resty-string
+        xiedacon/lua-utility \
+        c64bob/lua-resty-aes \
+        detailyang/lua-resty-cors \
+        ledgetech/lua-resty-http \
+        openresty/lua-resty-limit-traffic \
+        anjia0532/lua-resty-maxminddb \
+        openresty/lua-resty-string \
+        openresty/lua-resty-redis
 
 # Cleanup
 RUN \
@@ -192,3 +196,7 @@ RUN \
     && mv GeoLite2-City*/GeoLite2-City.mmdb /usr/local/openresty/nginx/conf/GeoLite2-City.mmdb
 
 ENTRYPOINT ["/usr/local/openresty/bin/openresty", "-c", "/usr/local/openresty/nginx/conf/nginx.conf" , "-g", "daemon off;"]
+
+# Use SIGQUIT instead of default SIGTERM to cleanly drain requests
+# See https://github.com/openresty/docker-openresty/blob/master/README.md#tips--pitfalls
+STOPSIGNAL SIGQUIT
