@@ -44,13 +44,10 @@ ARG RESTY_CONFIG_OPTIONS="\
     --with-mail_ssl_module \
     --with-md5-asm \
     --with-pcre-jit \
-    --with-pcre \
     --with-sha1-asm \
     --with-stream \
     --with-stream_ssl_module \
     --with-threads \
-    --with-cc-opt='-DNGX_LUA_ABORT_AT_PANIC -I/usr/local/openresty/pcre/include -I/usr/local/openresty/openssl/include' \
-    --with-ld-opt='-L/usr/local/openresty/pcre/lib -L/usr/local/openresty/openssl/lib -Wl,-rpath,/usr/local/openresty/pcre/lib:/usr/local/openresty/openssl/lib' \
     "
 ARG TENGINE_MODULES="\
     --add-module=/tmp/tengine/modules/ngx_http_concat_module/ \
@@ -65,7 +62,10 @@ ARG EXTRA_MODULES="\
     "
 
 # These are not intended to be user-specified
-ARG _RESTY_CONFIG_DEPS="--with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} --with-pcre=/tmp/pcre-${RESTY_PCRE_VERSION}"
+ARG _RESTY_CONFIG_DEPS="--with-pcre \
+    --with-cc-opt='-DNGX_LUA_ABORT_AT_PANIC -I/usr/local/openresty/pcre/include -I/usr/local/openresty/openssl/include' \
+    --with-ld-opt='-L/usr/local/openresty/pcre/lib -L/usr/local/openresty/openssl/lib -Wl,-rpath,/usr/local/openresty/pcre/lib:/usr/local/openresty/openssl/lib' \
+    "
 
 # 1) Install apk dependencies
 # 2) Download and untar OpenSSL, PCRE, NAXSI, Brotli, Tengine Modules and OpenResty
@@ -152,7 +152,7 @@ RUN \
     && git clone --single-branch --branch master https://github.com/GetPageSpeed/ngx_security_headers.git --recursive \
     && git clone --single-branch --branch master https://github.com/google/ngx_brotli.git --recursive \
     && cd /tmp/openresty-${RESTY_VERSION} \
-    && ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${TENGINE_MODULES} ${EXTRA_MODULES} --add-dynamic-module=/tmp/naxsi-$NAXSI_VERSION/naxsi_src/ \
+    && eval ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${TENGINE_MODULES} ${EXTRA_MODULES} --add-dynamic-module=/tmp/naxsi-$NAXSI_VERSION/naxsi_src/ \
     && make -j${RESTY_J} \
     && make -j${RESTY_J} install \
     && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
